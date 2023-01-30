@@ -5,12 +5,12 @@ import user from '../assets/user.svg';
 const form = document.querySelector("form") as HTMLFormElement;
 const chat_Container = document.querySelector("#chat_container");
 
-let loadInterval;
+let loadInterval:any;
 
 function loader(element:HTMLElement) {
   element.textContent = "";
 
-  setInterval(() => {
+  loadInterval = setInterval(() => {
     element.textContent += ".";
 
     if(element.textContent === "....") {
@@ -72,9 +72,38 @@ const handleSubmit = async (e: Event) => {
 
   chat_Container!.scrollTop= chat_Container?.scrollHeight as number;
 
-  const messageDiv = document.getElementById(uniqueId);
+  const messageDiv = document.getElementById(uniqueId) as HTMLElement;
 
   loader(messageDiv as HTMLElement);
+
+  const response = await fetch("http://localhost:8080/", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+       prompt: data.get('prompt')
+    })
+  })
+
+  clearInterval(loadInterval);
+
+  messageDiv!.innerHTML = " ";
+
+  if(response.ok) {
+    const data = await response.json();
+
+    const parsedData = data.bot.trim();
+
+    textTyping(messageDiv, parsedData);
+
+
+  } else {
+    const err = await response.text();
+
+    messageDiv.innerHTML = "Something went wrong";
+    alert(err);
+  }
 }
 
 form.addEventListener("submit", handleSubmit);
